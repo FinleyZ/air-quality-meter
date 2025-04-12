@@ -53,6 +53,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+uint16_t Timer_GetMicros(void);
 
 /* USER CODE END EFP */
 
@@ -68,6 +69,7 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOA
 #define DHT_DATA_Pin GPIO_PIN_8
 #define DHT_DATA_GPIO_Port GPIOA
+#define DHT_DATA_EXTI_IRQn EXTI9_5_IRQn
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
