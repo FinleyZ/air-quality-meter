@@ -130,7 +130,6 @@ void DHT_Touch(void){
 
 void DHT_PrintLatestData(void){
     if (latest_dht_data.is_valid) {
-        printf("Checksum OK\r\n");
         printf("Humidity: %d.%d%%  Temp: %d.%d°C\r\n",
                latest_dht_data.humidity_raw / 10,
                latest_dht_data.humidity_raw % 10,

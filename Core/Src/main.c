@@ -24,6 +24,7 @@
 #include "dht.h"
 #include "stdio.h"
 #include "string.h"
+#include "sds.h"
 
 /* USER CODE END Includes */
 
@@ -45,7 +46,9 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -54,8 +57,10 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void DWT_Init(void);
 void DWT_Delay_us(uint32_t us);
@@ -95,8 +100,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start(&htim2);
@@ -108,43 +115,27 @@ int main(void)
   while (1)
   {
     printf("----------------Version 0.0.0----------------\r\n");
-    // while (1)
-    // {
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_SET);
-      // for (int i = 0; i < 800; i++); // ~30–40 µs delay:QUESTION0
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_RESET);
-      // for (int i = 0; i < 800; i++); // ~30–40 µs delay:QUESTION0
 
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_SET);
-      // Timer_Delay_us(100); // Delay 100 us in total
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_RESET);
-      // Timer_Delay_us(100); // Delay 100 us in total
-
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_SET);
-      // for (int i = 0; i < 100; i++) {
-      //   Timer_Delay_us(1); // Delay 100 us in total
-      // }
-      // HAL_GPIO_WritePin(DHT_DATA_GPIO_Port, DHT_DATA_Pin, GPIO_PIN_RESET);
-      // for (int i = 0; i < 100; i++) {
-      //   Timer_Delay_us(1); // Delay 100 us in total
-      // }
-    // }
-    
+    while (1)
+    {
+      DHT_Touch();
+      DHT_Data data = DHT_GetLatestData();
+      DHT_PrintLatestData();
+      
+      // SDS_setWorkMode();
+      // HAL_Delay(1000);
+      // uint32_t timeout = HAL_GetTick() + 1000;
+      // while (!sds_response_ready && HAL_GetTick() < timeout);
+      SDS_queryData();
+      // HAL_Delay(2000);
+      // SDS_setSleepMode();
+      HAL_Delay(4000);
 
 
-    DHT_Touch();
-    DHT_Data data = DHT_GetLatestData();
-    if (data.is_valid) {
-        printf("Latest from main loop:\r\n");
-        printf("Humidity: %d.%d%%  Temp: %d.%d°C\r\n",
-               data.humidity_raw / 10,
-               data.humidity_raw % 10,
-               data.temperature_raw / 10,
-               data.temperature_raw % 10);
-    } else {
-        printf("No valid DHT data available.\r\n");
+      
+      // SDS_setWorkMode();
+      // HAL_Delay(3000);
     }
-    HAL_Delay(2000);
     // DHT_PrintLatestData();
 
     /* USER CODE END WHILE */
@@ -239,6 +230,39 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -268,6 +292,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
 
@@ -313,7 +353,7 @@ static void MX_GPIO_Init(void)
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  // HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -358,6 +398,17 @@ void Timer_Delay_us(uint16_t us) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if (GPIO_Pin == DHT_DATA_Pin) {
     DHT_ReadResponse(GPIO_Pin);
+  }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    SDS_getData();
+    // printf("checked\r\n");
+    sds_response_ready = 1;
+    sds_command_waiting = 0;
+    HAL_UART_Receive_DMA(&huart1, SDS_receivedData, 10);
+
   }
 }
 /* USER CODE END 4 */

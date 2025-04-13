@@ -70,6 +70,10 @@ uint16_t Timer_GetMicros(void);
 #define DHT_DATA_Pin GPIO_PIN_8
 #define DHT_DATA_GPIO_Port GPIOA
 #define DHT_DATA_EXTI_IRQn EXTI9_5_IRQn
+#define SDS011_TX_Pin GPIO_PIN_9
+#define SDS011_TX_GPIO_Port GPIOA
+#define SDS011_RX_Pin GPIO_PIN_10
+#define SDS011_RX_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
